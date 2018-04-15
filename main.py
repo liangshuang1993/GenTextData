@@ -11,9 +11,8 @@ VAL_DIR = DATASET + '/val'
 if not os.path.exists(TRAIN_DIR):
     os.mkdir(TRAIN_DIR)
 
-
-if not os.path.exists(VAL_DIR):
-    os.mkdir(VAL_DIR)
+# if not os.path.exists(VAL_DIR):
+#     os.mkdir(VAL_DIR)
 
 class GenPic(object):
     def __init__(self, height=32, font_size=24, gap=(3, 4)):
@@ -124,7 +123,7 @@ class GenPic(object):
 
 if __name__ == '__main__':
     gen = GenPic()
-    # gen.generate_pics(TRAIN_DIR, 'new_label.txt')
-    # gen.gen_dicts('new_label.txt')
-    gen.generate_pics(VAL_DIR, 'test.txt')
+    gen.generate_pics(TRAIN_DIR, 'new_label.txt')
+    gen.gen_dicts('new_label.txt')
+    # gen.generate_pics(VAL_DIR, 'test.txt')
     print 'done'
