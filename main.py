@@ -8,6 +8,9 @@ DATASET = 'datasets'
 TRAIN_DIR = DATASET + '/train'
 VAL_DIR = DATASET + '/val'
 
+if not os.path.exists(DATASET):
+    os.mkdir(DATASET)
+
 if not os.path.exists(TRAIN_DIR):
     os.mkdir(TRAIN_DIR)
 
@@ -15,13 +18,15 @@ if not os.path.exists(TRAIN_DIR):
 #     os.mkdir(VAL_DIR)
 
 class GenPic(object):
-    def __init__(self, height=32, font_size=24, gap=(3, 4)):
+    def __init__(self, label_file, height=32, font_size=24, gap=(3, 4)):
         self.backgounds = os.listdir('background')
         self.height = height
         self.font_size = font_size
         self.english_fonts = ['Times New Roman.ttf', '宋体_GB18030+%26+新宋体_GB18030.ttc']
         self.chinese_fonts = ['原版宋体.ttf', '宋体_GB18030+%26+新宋体_GB18030.ttc']
         self.gap = gap
+        with open(label_file, 'r') as f:
+            self.labels = f.readlines()
 
     def get_bg(self, length, gap=3):
         bg = np.random.choice(self.backgounds)
@@ -41,11 +46,9 @@ class GenPic(object):
         return img[pos_h: pos_h + self.height, pos_w: pos_w + width]
 
     def gen_dicts(self, label_file):
-        with open(label_file, 'r') as f:
-            labels = f.readlines()
         dicts = []
 
-        for label in labels:
+        for label in self.labels:
             label = label.strip().decode('utf-8')
             for char in label:
                 dicts.append(char)
@@ -57,10 +60,8 @@ class GenPic(object):
                 f.write(char.encode('utf-8'))
 
     def generate_pics(self, image_dir, label_file):
-        with open(label_file, 'r') as f:
-            labels = f.readlines()
 
-        for label in labels:
+        for label in self.labels:
             # print label
             # print len(label.decode('utf-8'))
             label = label.strip()
@@ -122,8 +123,8 @@ class GenPic(object):
 
 
 if __name__ == '__main__':
-    gen = GenPic()
-    gen.generate_pics(TRAIN_DIR, 'new_label.txt')
+    gen = GenPic('new_label.txt')
+    gen.generate_pics(TRAIN_DIR)
     gen.gen_dicts('new_label.txt')
     # gen.generate_pics(VAL_DIR, 'test.txt')
     print 'done'
