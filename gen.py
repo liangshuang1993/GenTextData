@@ -85,6 +85,8 @@ class put_chinese_text(object):
             slot = self._face.glyph
             bitmap = slot.bitmap
 
+            # 
+
             cur_pen.x = pen.x
             cur_pen.y = pen.y - slot.bitmap_top * 64
             self.draw_ft_bitmap(image, bitmap, cur_pen, color)
