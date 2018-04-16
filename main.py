@@ -76,16 +76,17 @@ class GenPic(object):
             print label
 
             length = len(label.decode('utf-8'))
-            step = np.random.randint(1, self.step + 1)
+            step = np.random.randint(2, self.step + 1)
             # for gap1 in [5]:
             for start1 in range(0, 2 * self.margin[1], step):
                 for angle in range(-5, 5, step):
 
                     if self.__has_chinese(label.decode('utf-8')):
 
-                        # hor
-                        for start0 in range(0, 2 * (self.margin[0] + length), step):
-                        # for gap0 in [2]:
+                        # horizantal
+                        for start0 in range(0, 2 * (self.margin[0] + length) + step - 1, step):
+                            if start0 > 2 * (self.margin[0] + length):
+                                start0 = 2 * (self.margin[0] + length)
                             pos = (start0, start1)
                             for font in self.chinese_fonts:
                                 try:
@@ -98,8 +99,9 @@ class GenPic(object):
                                     print e
                                     continue
                     else:
-                        for start0 in range(0, 2 * (self.margin[0] + 3 * length), step):
-                        # for gap0 in [2]:
+                        for start0 in range(0, 2 * (self.margin[0] + 3 * length) + step - 1, step):
+                            if start0 > 2 * (self.margin[0] + 3 * length):
+                                start0 = 2 * (self.margin[0] + 3 * length)
                             pos = (start0, start1)
                             for font in self.english_fonts:
                                 try:
@@ -114,7 +116,13 @@ class GenPic(object):
 
     def __draw(self, image_dir, img, pos, label, color_, font, index, angle):
         ft = put_chinese_text('fonts/' + font)
-        image = ft.draw_text(img, pos, label, self.font_size, color_, angle)
+        image = ft.draw_text(img,
+                             pos,
+                             label,
+                             np.random.randint(self.font_size - 4,
+                                               self.font_size),
+                             color_,
+                             angle)
         # light = np.random.choice(range(8, 13))
         # image = image * light / 10.0
         image = np.uint8(np.clip((np.random.randint(10, 20) / 10.0 * image + np.random.randint(20)), 0, 255))
