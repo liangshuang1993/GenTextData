@@ -23,8 +23,8 @@ class GenPic(object):
         self.backgounds = os.listdir('background')
         self.height = height
         self.font_size = font_size
-        self.english_fonts = ['Times New Roman.ttf', '宋体_GB18030+%26+新宋体_GB18030.ttc', 'simhei.ttf']
-        self.chinese_fonts = ['原版宋体.ttf', '宋体_GB18030+%26+新宋体_GB18030.ttc', 'Ubuntu-Bold.ttf', 'simhei.ttf']
+        self.english_fonts = ['Times New Roman.ttf', '宋体_GB18030+%26+新宋体_GB18030.ttc', 'Ubuntu-Bold.ttf', 'simhei.ttf']
+        self.chinese_fonts = ['原版宋体.ttf', '宋体_GB18030+%26+新宋体_GB18030.ttc', 'simhei.ttf']
         self.margin = margin
         self.step = step
         with open(label_file, 'r') as f:
@@ -51,7 +51,7 @@ class GenPic(object):
         # color_ = (0, 0, 0) # black
         return (np.random.randint(thes), np.random.randint(thes), np.random.randint(thes))
 
-    def gen_dicts(self, label_file):
+    def gen_dicts(self):
         dicts = []
 
         for label in self.labels:
@@ -76,14 +76,15 @@ class GenPic(object):
             print label
 
             length = len(label.decode('utf-8'))
+            step = np.random.randint(1, self.step + 1)
             # for gap1 in [5]:
-            for start1 in range(0, 2 * self.margin[1], np.random.randint(1, self.step + 1)):
-                for angle in range(-5, 5, np.random.randint(1, self.step + 1)):
+            for start1 in range(0, 2 * self.margin[1], step):
+                for angle in range(-5, 5, step):
 
                     if self.__has_chinese(label.decode('utf-8')):
 
                         # hor
-                        for start0 in range(0, 2 * (self.margin[0] + length), np.random.randint(1, self.step + 1)):
+                        for start0 in range(0, 2 * (self.margin[0] + length), step):
                         # for gap0 in [2]:
                             pos = (start0, start1)
                             for font in self.chinese_fonts:
@@ -97,7 +98,7 @@ class GenPic(object):
                                     print e
                                     continue
                     else:
-                        for start0 in range(0, 2 * (self.margin[0] + 3 * length), np.random.randint(1, self.step + 1)):
+                        for start0 in range(0, 2 * (self.margin[0] + 3 * length), step):
                         # for gap0 in [2]:
                             pos = (start0, start1)
                             for font in self.english_fonts:
