@@ -47,7 +47,7 @@ class GenPic(object):
 
         return img[pos_h: pos_h + self.height, pos_w: pos_w + width]
 
-    def get_color(self, thes=10):
+    def get_color(self, thes=50):
         # color_ = (0, 0, 0) # black
         return (np.random.randint(thes), np.random.randint(thes), np.random.randint(thes))
 
@@ -79,7 +79,7 @@ class GenPic(object):
             step = np.random.randint(2, self.step + 1)
             # for gap1 in [5]:
             for start1 in range(0, 2 * self.margin[1], step):
-                for angle in range(-5, 5, step):
+                for angle in range(-15, 15, 3):
 
                     if self.__has_chinese(label.decode('utf-8')):
 
@@ -126,6 +126,7 @@ class GenPic(object):
         # light = np.random.choice(range(8, 13))
         # image = image * light / 10.0
         image = np.uint8(np.clip((np.random.randint(10, 20) / 10.0 * image + np.random.randint(20)), 0, 255))
+        image = cv2.resize(image, (int(image.shape[0] * np.random.randint(8, 12) / 10.0), 32))
         # affine_transform
         # length = len(label.decode('utf-8'))
         # if length < 5:

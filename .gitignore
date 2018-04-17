@@ -1,2 +1,5 @@
 nohup.out
 *.pyc
+.idea
+.idea/**
+word2.txt
