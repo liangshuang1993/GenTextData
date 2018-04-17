@@ -5,39 +5,29 @@ import cv2
 import numpy as np
 import glob
 
-images_folder='/home/echo/projects/text_detection/gen_dataset/datasets/train/'
 
-path_output='/home/echo/projects/text_detection/crnn-master/lmdb_data'
+path_output='/datasets/GenTextData/lmdb_data/'
 
-
-os.chdir(images_folder)
-all_images = glob.glob("*.jpg")
-np.random.shuffle(all_images)
+with open('train.txt', 'r') as f:
+    lines = f.readlines()
 
 images_train = []
-images_val = []
-
-for i in range(int(len(all_images) * 0.9)):
-    images_train.append(all_images[i])
-
-for i in range(int(len(all_images) * 0.9), len(all_images)):
-    images_val.append(all_images[i])
-
-# left_train,labels_train,right_train = list(zip(*[os.path.splitext(x)[0].split('_')
-#                                          for x in images_train]))
-
-# print len(images_train)
-# print len(images_val)
-
 labels_train = []
+for line in lines:
+    image, label = line.strip().decode('utf-8').split(' ')
+    images_train.append(image)
+    labels_train.append(label)
+
+
+with open('val.txt', 'r') as f:
+    lines = f.readlines()
+
+images_val = []
 labels_val = []
-
-for image in images_train:
-    labels_train.append(image.split('_')[0])
-
-for image in images_val:
-    labels_val.append(image.split('_')[0])
-
+for line in lines:
+    image, label = line.strip().decode('utf-8').split(' ')
+    images_val.append(image)
+    labels_val.append(label)
 
 def checkImageIsValid(imageBin):
     if imageBin is None:
@@ -56,7 +46,7 @@ def writeCache(env, cache):
             txn.put(k, v)
 
 
-def createDataset(outputPath,images_train, labels_train, lexiconList=None, checkValid=True):
+def createDataset(outputPath, images_train, labels_train, lexiconList=None, checkValid=True):
     """
     Create LMDB dataset for CRNN training.
     ARGS:
@@ -69,15 +59,16 @@ def createDataset(outputPath,images_train, labels_train, lexiconList=None, check
     assert(len(images_train) == len(labels_train))
     nSamples = len(images_train)
 
-    env = lmdb.open(path_output, map_size=1099511627776)
+    env = lmdb.open(outputPath, map_size=1099511627776)
     cache = {}
     cnt = 1
-    for i in range(nSamples):
+    random_index = range(nSamples)
+    np.random.shuffle(random_index)
+    for i in random_index:
         imagePath = images_train[i]
         label = labels_train[i]
         if not os.path.exists(imagePath):
             print('%s does not exist' % imagePath)
-            continue
         with open(imagePath, 'rb') as f:
             imageBin = f.read()
         if checkValid:
@@ -105,5 +96,6 @@ def createDataset(outputPath,images_train, labels_train, lexiconList=None, check
 
 
 if __name__ == '__main__':
-    createDataset(path_output + 'train',images_train, labels_train)
-    createDataset(path_output + 'val',images_val, labels_val)
+    createDataset(path_output + 'train', images_train, labels_train)
+    createDataset(path_output + 'val', images_val, labels_val)
+
