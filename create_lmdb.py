@@ -69,7 +69,7 @@ def createDataset(outputPath,images_train, labels_train, lexiconList=None, check
     assert(len(images_train) == len(labels_train))
     nSamples = len(images_train)
 
-    env = lmdb.open(path_output, map_size=1099511627776)
+    env = lmdb.open(outputPath, map_size=1099511627776)
     cache = {}
     cnt = 1
     for i in range(nSamples):
