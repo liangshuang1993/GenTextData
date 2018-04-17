@@ -5,24 +5,37 @@ import cv2
 import numpy as np
 import glob
 
-images_folder='/home/echo/projects/text_detection/gen_dataset/datasets/train/'
+images_folder1='/home/echo/projects/text_detection/GenTextData/datasets/val/'
+# images_folder2=''
 
-path_output='/home/echo/projects/text_detection/crnn-master/lmdb_data'
+path_output='/home/echo/projects/text_detection/GenTextData/lmdb_data/'
 
+all_images = []
 
-os.chdir(images_folder)
-all_images = glob.glob("*.jpg")
+os.chdir(images_folder1)
+all_images1 = glob.glob("*.jpg")
+
+# os.chdir(images_folder2)
+# all_images2 = glob.glob("*.png")
+
+all_images = all_images1
+
 np.random.shuffle(all_images)
 
 images_train = []
 images_val = []
 
-for i in range(int(len(all_images) * 0.9)):
-    images_train.append(all_images[i])
+# for i in range(int(len(all_images) * 0.9)):
+#     images_train.append(all_images[i])
+#
+# for i in range(int(len(all_images) * 0.9), len(all_images)):
+#     images_val.append(all_images[i])
 
-for i in range(int(len(all_images) * 0.9), len(all_images)):
+for i in range(int(len(all_images) * 1)):
+    print all_images[i].decode('utf-8')
+    if " " in all_images[i]:
+        raise Exception('Space')
     images_val.append(all_images[i])
-
 # left_train,labels_train,right_train = list(zip(*[os.path.splitext(x)[0].split('_')
 #                                          for x in images_train]))
 

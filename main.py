@@ -257,8 +257,8 @@ class GenPic(object):
 
 
 if __name__ == '__main__':
-    gen = GenPic('word2.txt')
-    gen.generate_pics(TRAIN_DIR)
-    # gen.gen_dicts('new_label.txt')
+    gen = GenPic('labels_with_real.txt')
+    # gen.generate_pics(TRAIN_DIR)
+    gen.gen_dicts()
     # gen.generate_pics(VAL_DIR, 'test.txt')
     print 'done'
