@@ -45,6 +45,7 @@ def draw_string(background, face, string, position, angle, padding, color, ratio
     background: pre-loaded images
     face: pre-loaded Face
     '''
+    bg_height, bg_width = background.shape
     font_height = 32
     if not isinstance(string, unicode):
         string = string.decode('utf-8')
@@ -56,17 +57,30 @@ def draw_string(background, face, string, position, angle, padding, color, ratio
                                 int(rotate_matrix[1, 1] * 0x10000L))
     face.set_transform(matrix, freetype.Vector())
 
+    # adjust position to make sure the string always inside the background
     length = len(string)
     original_bbox_min = position
     original_bbox_max = [position[0] + (length - 1) * gap + length * ratio * font_height, position[1] + font_height]
     min_, max_ = calc_bbox(get_bbox(original_bbox_min, original_bbox_max, angle))
+    min_[0] -= padding[3]
+    min_[1] -= padding[0]
+    max_[0] += padding[2]
+    max_[1] += padding[1]
     if min_[0] < 0:
         position[0] -= min_[0]
     if min_[1] < 0:
         position[1] -= min_[1]
+    if max_[0] > bg_width:
+        position[0] -= max_[0] - bg_width
+    if max_[1] > bg_height:
+        position[1] -= max_[1] - bg_height
     original_bbox_min = position
     original_bbox_max = [position[0] + (length - 1) * gap + length * ratio * font_height, position[1] + font_height]
     min_, max_ = calc_bbox(get_bbox(original_bbox_min, original_bbox_max, angle))
+    min_[0] -= padding[3]
+    min_[1] -= padding[0]
+    max_[0] += padding[2]
+    max_[1] += padding[1]
 
     idx = 0
     for char in string:
