@@ -62,15 +62,16 @@ class GenPic(object):
             print label
 
             length = len(label.decode('utf-8'))
+
             step = np.random.randint(2, self.step + 1)
             # for gap1 in [5]:
-            for start1 in range(0, 2 * self.margin[1], step):
+            for start1 in range(2, 2 * self.margin[1], step):
                 for angle in range(-15, 15, 3):
 
                     if self.__has_chinese(label.decode('utf-8')):
 
                         # horizantal
-                        for start0 in range(0, 2 * (self.margin[0] + length) + step - 1, step):
+                        for start0 in range(2, 2 * (self.margin[0] + length) + step - 1, step):
                             if start0 > 2 * (self.margin[0] + length):
                                 start0 = 2 * (self.margin[0] + length)
                             pos = (start0, start1)
@@ -83,7 +84,7 @@ class GenPic(object):
                                 except Exception as e:
                                     print e
                     else:
-                        for start0 in range(0, 2 * (self.margin[0] + 3 * length) + step - 1, step):
+                        for start0 in range(2, 2 * (self.margin[0] + 3 * length) + step - 1, step):
                             if start0 > 2 * (self.margin[0] + 3 * length):
                                 start0 = 2 * (self.margin[0] + 3 * length)
                             pos = (start0, start1)

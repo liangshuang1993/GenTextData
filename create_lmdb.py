@@ -7,6 +7,8 @@ import glob
 
 
 path_output='/datasets/GenTextData/lmdb_data/'
+TRAIN_DIR = '/datasets/synthdata-zh/datasets'
+VAL_DIR = '/datasets/GenTextData/val'
 
 with open('train.txt', 'r') as f:
     lines = f.readlines()
@@ -15,9 +17,8 @@ images_train = []
 labels_train = []
 for line in lines:
     image, label = line.strip().decode('utf-8').split(' ')
-    images_train.append(image)
+    images_train.append(os.path.join(TRAIN_DIR, image))
     labels_train.append(label)
-
 
 with open('val.txt', 'r') as f:
     lines = f.readlines()
@@ -26,7 +27,7 @@ images_val = []
 labels_val = []
 for line in lines:
     image, label = line.strip().decode('utf-8').split(' ')
-    images_val.append(image)
+    images_val.append(os.path.join(VAL_DIR, image))
     labels_val.append(label)
 
 def checkImageIsValid(imageBin):
@@ -79,8 +80,7 @@ def createDataset(outputPath, images_train, labels_train, lexiconList=None, chec
         imageKey = 'image-%09d' % cnt
         labelKey = 'label-%09d' % cnt
         cache[imageKey] = imageBin
-        cache[labelKey] = label
-        print label
+        cache[labelKey] = label.encode('utf-8')
         if lexiconList:
             lexiconKey = 'lexicon-%09d' % cnt
             cache[lexiconKey] = ' '.join(lexiconList[i])
@@ -98,4 +98,5 @@ def createDataset(outputPath, images_train, labels_train, lexiconList=None, chec
 if __name__ == '__main__':
     createDataset(path_output + 'train', images_train, labels_train)
     createDataset(path_output + 'val', images_val, labels_val)
+
 
