@@ -3,6 +3,8 @@ import freetype
 import cv2
 import numpy as np
 import math
+import os
+import copy
 
 def draw_bbox(img, pt1, pt2, angle, color=(255, 0, 0)):
     bbox = get_bbox(pt1, pt2, angle)
@@ -40,12 +42,14 @@ def rotate_pt(origin, pt, angle):
     cos_angle = math.cos(angle_degree)
     return (int(origin[0] + cos_angle * delta[0] - sin_angle * delta[1]), int(origin[1] + sin_angle * delta[0] + cos_angle * delta[1]))
 
-def draw_string(background, face, string, position, angle, padding, color, ratio, gap):
+def draw_string(bg, face, string, position, angle, padding, color, ratio, gap):
     '''
-    background: pre-loaded images
+    bg: pre-loaded images
     face: pre-loaded Face
     '''
-    bg_height, bg_width = background.shape
+    background = copy.deepcopy(bg)
+    bg_height = background.shape[0]
+    bg_width = background.shape[1]
     font_height = 32
     if not isinstance(string, unicode):
         string = string.decode('utf-8')
@@ -102,16 +106,68 @@ def draw_string(background, face, string, position, angle, padding, color, ratio
                     background[y_pos + row][x_pos + col][1] += color[1]
                     background[y_pos + row][x_pos + col][2] += color[2]
         idx += 1
-    return min_, max_
+    return min_, max_, background
+
+def load_backgrounds(path):
+    background_files = os.listdir(path)
+    bgs = []
+    for file in background_files:
+        bg = cv2.imread(path + file)
+        bgs.append(bg)
+    return bgs
+
+def load_faces(path, chinese = False):
+    font_files = os.listdir(path)
+    faces = []
+    for file in font_files:
+        if not chinese or has_chinese(file):
+            face = freetype.Face(path + file)
+            faces.append(face)
+    return faces
+
+
+def has_chinese(word):
+    if not isinstance(word, unicode):
+        word = word.decode('utf-8')
+    for ch in word:
+        # uc=ch.decode('utf-8')
+        if u'\u4e00' <= ch <= u'\u9fff':
+            return True
+
+    return False
 
 if __name__ == '__main__':
+    with open('word2.txt', 'r') as f:
+        labels = f.readlines()
+    backgrounds = load_backgrounds('./background/')
+    english_faces = load_faces('./fonts/', False) # chinese font supports english
+    chinese_faces = load_faces('./fonts/', True)
+    faces = []
 
-    background = cv2.imread('background/bg4.jpg')
-
-    face = freetype.Face('fonts/原版宋体.ttf')
-    min_, max_ = draw_string(background, face, "@测试TESTTest!", [100, 200], 10, [1,2,3,4], (100, 200, 158), 0.8, 10)
-    #draw_bbox(background, min_, max_, 0)
-    crop_img = background[min_[1]:max_[1], min_[0]:max_[0]]
-    cv2.imshow('', background)
-    cv2.imshow('s', crop_img)
-    cv2.waitKey(0)
+    for label in labels:
+        label = label.strip()
+        for bg in backgrounds:
+            bg_height = bg.shape[0]
+            bg_width = bg.shape[1]
+            if has_chinese(label):
+                faces = chinese_faces
+            else:
+                faces = english_faces
+            for face in faces:
+                for positionIdx in range(2):
+                    x = np.random.randint(0, bg_width)
+                    y = np.random.randint(0, bg_height)
+                    position = [x, y]
+                    for angle in range(-6, 6, 1):
+                        for paddingIdx in range(10):
+                            padding = [np.random.randint(0, 5), np.random.randint(0, 8), np.random.randint(0, 5), np.random.randint(0, 8)]
+                            for colorIdx in range(5):
+                                color = [np.random.randint(100, 255), np.random.randint(100, 255), np.random.randint(100, 255)]
+                                for ratio in range(6, 14, 1):
+                                    ratio /= 10.0
+                                    for gap in range(0, 6, 2):
+                                        min_, max_, background = draw_string(bg, face, label, position, angle, padding, color, ratio, gap)
+                                        crop_img = background[min_[1]:max_[1], min_[0]:max_[0]]
+                                        cv2.imshow('background', background)
+                                        cv2.imshow('trim', crop_img)
+                                        cv2.waitKey(0)
