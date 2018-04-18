@@ -5,7 +5,7 @@ import os
 import numpy as np
 import threading
 
-DATASET = '/datasets/GenTextData/datasets'
+DATASET = 'datasets'
 TRAIN_DIR = DATASET + '/train'
 
 if not os.path.exists(DATASET):
@@ -18,14 +18,16 @@ if not os.path.exists(TRAIN_DIR):
 PREFIX = ['a', 'b', 'c']
 
 class GenPic(threading.Thread):
-    def __init__(self, thread_id, thread_num, train_dir, labels, height=32,
-                 font_size=24, margin=(5, 4), step=3):
+    def __init__(self, thread_id, train_dir, labels, height=32,
+                 font_size=24, margin=(1, 2), step=3):
         threading.Thread.__init__(self)
-        self.backgounds = os.listdir('/datasets/GenTextData/background')
+        self.backgounds = os.listdir('background')
         self.height = height
         self.font_size = font_size
-        self.english_fonts = ['Times New Roman.ttf', '宋体_GB18030+%26+新宋体_GB18030.ttc', 'Ubuntu-Bold.ttf', 'simhei.ttf']
-        self.chinese_fonts = ['原版宋体.ttf', '宋体_GB18030+%26+新宋体_GB18030.ttc']
+        self.english_fonts = ['Times New Roman.ttf', '宋体_GB18030+%26+新宋体_GB18030.ttc', 
+                              'Ubuntu-Bold.ttf', 'simhei.ttf']
+       # self.chinese_fonts = ['圆体.ttf', '微软雅黑.ttf', '楷书.ttf', '原版宋体.ttf']
+        self.chinese_fonts = ['圆体.ttf']
         self.margin = margin
         self.step = step
         self.prefix = PREFIX[thread_id]
@@ -36,11 +38,11 @@ class GenPic(threading.Thread):
 
     def get_bg(self, length):
         bg = np.random.choice(self.backgounds)
-        img = cv2.imread('/datasets/GenTextData/background/' + bg)
+        img = cv2.imread('background/' + bg)
         b_height, b_width, b_channel = img.shape
 
         # crop sutible size
-        width = (self.font_size + 5)* length + self.margin[0] * 2
+        width = (self.font_size + 1)* length + self.margin[0] * 2
         if b_height < self.height:
             raise Exception('Background height less than font_height')
         if b_width < width:
@@ -69,7 +71,7 @@ class GenPic(threading.Thread):
             step = np.random.randint(2, self.step + 1)
             # for gap1 in [5]:
             for start1 in range(2, 2 * self.margin[1], step):
-                for angle in range(-15, 15, 3):
+                for angle in range(-15, 15, 5):
 
                     if self.__has_chinese(label.decode('utf-8')):
 
@@ -101,7 +103,7 @@ class GenPic(threading.Thread):
                                     print e
 
     def __draw(self, image_dir, img, pos, label, color_, font, angle):
-        ft = put_chinese_text('/datasets/GenTextData/fonts/' + font)
+        ft = put_chinese_text('fonts/' + font)
         image = ft.draw_text(img,
                              pos,
                              label,
@@ -111,7 +113,7 @@ class GenPic(threading.Thread):
                              angle)
         # light = np.random.choice(range(8, 13))
         # image = image * light / 10.0
-        image = np.uint8(np.clip((np.random.randint(10, 20) / 10.0 * image + np.random.randint(20)), 0, 255))
+        # image = np.uint8(np.clip((np.random.randint(10, 20) / 10.0 * image + np.random.randint(20)), 0, 255))
         image = cv2.resize(image, (int(image.shape[1] * np.random.randint(8, 12) / 10.0), 32))
 
         # label contains / or other char
@@ -133,20 +135,19 @@ class GenPic(threading.Thread):
 
 
 if __name__ == '__main__':
-    with open('/datasets/GenTextData/new_label.txt', 'r') as f:
+    with open('word2.txt', 'r') as f:
         labels = f.readlines()
 
     length = len(labels)
-    thread_num = 5
+    thread_num = 2
 
     thread_list = []
     for m in range(thread_num):
         current_labels = labels[int(m * length / thread_num): int((m + 1) * length / thread_num)]
-        thread = GenPic(m, thread_num, TRAIN_DIR, current_labels)
+        thread = GenPic(m, TRAIN_DIR, current_labels)
         thread_list.append(thread)
         thread.start()
     for t in thread_list:
         t.join()
 
     print 'done'
-

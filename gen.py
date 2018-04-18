@@ -87,7 +87,7 @@ class put_chinese_text(object):
 
             #
             if i > 0:
-                pen.x += np.random.randint(200, 280)
+                pen.x += np.random.randint(500, 856)
 
             cur_pen.x = pen.x
             cur_pen.y = pen.y - slot.bitmap_top * 64
