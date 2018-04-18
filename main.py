@@ -3,10 +3,9 @@ from gen import *
 import cv2
 import os
 import numpy as np
-import math
-from datetime import datetime
+import threading
 
-DATASET = 'datasets'
+DATASET = '/datasets/GenTextData/datasets'
 TRAIN_DIR = DATASET + '/train'
 
 if not os.path.exists(DATASET):
@@ -15,25 +14,29 @@ if not os.path.exists(DATASET):
 if not os.path.exists(TRAIN_DIR):
     os.mkdir(TRAIN_DIR)
 
-class GenPic(object):
-    def __init__(self, label_file, prefix, height=32, font_size=24, margin=(5, 4), step=3):
-        self.backgounds = os.listdir('background')
+
+PREFIX = ['a', 'b', 'c']
+
+class GenPic(threading.Thread):
+    def __init__(self, thread_id, thread_num, train_dir, labels, height=32,
+                 font_size=24, margin=(5, 4), step=3):
+        threading.Thread.__init__(self)
+        self.backgounds = os.listdir('/datasets/GenTextData/background')
         self.height = height
         self.font_size = font_size
         self.english_fonts = ['Times New Roman.ttf', '宋体_GB18030+%26+新宋体_GB18030.ttc', 'Ubuntu-Bold.ttf', 'simhei.ttf']
         self.chinese_fonts = ['原版宋体.ttf', '宋体_GB18030+%26+新宋体_GB18030.ttc']
         self.margin = margin
         self.step = step
-        self.prefix = prefix
+        self.prefix = PREFIX[thread_id]
         self.count = 0
-        with open(label_file, 'r') as f:
-            self.labels = f.readlines()
-
-        self.f = open('train.txt', 'w')
+        self.image_dir = train_dir
+        self.labels = labels
+        self.f = open(os.path.join(DATASET, 'train' + str(thread_id) + '.txt'), 'w')
 
     def get_bg(self, length):
         bg = np.random.choice(self.backgounds)
-        img = cv2.imread('background/' + bg)
+        img = cv2.imread('/datasets/GenTextData/background/' + bg)
         b_height, b_width, b_channel = img.shape
 
         # crop sutible size
@@ -52,7 +55,7 @@ class GenPic(object):
         # color_ = (0, 0, 0) # black
         return (np.random.randint(thes), np.random.randint(thes), np.random.randint(thes))
 
-    def generate_pics(self, image_dir):
+    def run(self):
 
         for label in self.labels:
             # print label
@@ -79,7 +82,7 @@ class GenPic(object):
                                 try:
                                     img = self.get_bg(length)
                                     color = self.get_color()
-                                    self.__draw(image_dir, img, pos, label, color, font,
+                                    self.__draw(self.image_dir, img, pos, label, color, font,
                                                 angle)
                                 except Exception as e:
                                     print e
@@ -92,13 +95,13 @@ class GenPic(object):
                                 try:
                                     img = self.get_bg(length)
                                     color = self.get_color()
-                                    self.__draw(image_dir, img, pos, label, color, font,
+                                    self.__draw(self.image_dir, img, pos, label, color, font,
                                                 angle)
                                 except Exception as e:
                                     print e
 
     def __draw(self, image_dir, img, pos, label, color_, font, angle):
-        ft = put_chinese_text('fonts/' + font)
+        ft = put_chinese_text('/datasets/GenTextData/fonts/' + font)
         image = ft.draw_text(img,
                              pos,
                              label,
@@ -130,9 +133,20 @@ class GenPic(object):
 
 
 if __name__ == '__main__':
+    with open('/datasets/GenTextData/new_label.txt', 'r') as f:
+        labels = f.readlines()
 
-    # only use this script to generate train images, val images use real images
-    gen = GenPic('word2.txt', 'f')
-    gen.generate_pics(TRAIN_DIR)
-    gen.f.close()
+    length = len(labels)
+    thread_num = 5
+
+    thread_list = []
+    for m in range(thread_num):
+        current_labels = labels[int(m * length / thread_num): int((m + 1) * length / thread_num)]
+        thread = GenPic(m, thread_num, TRAIN_DIR, current_labels)
+        thread_list.append(thread)
+        thread.start()
+    for t in thread_list:
+        t.join()
+
     print 'done'
+
