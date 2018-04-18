@@ -7,27 +7,21 @@ import glob
 
 
 path_output='/datasets/GenTextData/lmdb_data/'
+TRAIN_DIR1 = '/datasets/synthdata-zh/datasets'
+TRAIN_DIR2 = ''
 
-with open('train.txt', 'r') as f:
-    lines = f.readlines()
+VAL_DIR = '/datasets/GenTextData/val'
 
-images_train = []
-labels_train = []
-for line in lines:
-    image, label = line.strip().decode('utf-8').split(' ')
-    images_train.append(image)
-    labels_train.append(label)
+def read_txt(image_dir, image_txt, images=[], labels=[]):
+    with open(image_txt, 'r') as f:
+        lines = f.readlines()
 
+    for line in lines:
+        image, label = line.strip().decode('utf-8').split(' ')
+        images.append(os.path.join(image_dir, image))
+        labels.append(label)
 
-with open('val.txt', 'r') as f:
-    lines = f.readlines()
-
-images_val = []
-labels_val = []
-for line in lines:
-    image, label = line.strip().decode('utf-8').split(' ')
-    images_val.append(image)
-    labels_val.append(label)
+    return images, labels
 
 def checkImageIsValid(imageBin):
     if imageBin is None:
@@ -79,8 +73,7 @@ def createDataset(outputPath, images_train, labels_train, lexiconList=None, chec
         imageKey = 'image-%09d' % cnt
         labelKey = 'label-%09d' % cnt
         cache[imageKey] = imageBin
-        cache[labelKey] = label
-        print label
+        cache[labelKey] = label.encode('utf-8')
         if lexiconList:
             lexiconKey = 'lexicon-%09d' % cnt
             cache[lexiconKey] = ' '.join(lexiconList[i])
@@ -96,6 +89,16 @@ def createDataset(outputPath, images_train, labels_train, lexiconList=None, chec
 
 
 if __name__ == '__main__':
-    createDataset(path_output + 'train', images_train, labels_train)
+    # read first train.txt
+    images_train = []
+    labels_train = []
+    images_train1, labels_train1 = read_txt(TRAIN_DIR1, '/datasets/synthdata-zh/train.txt', images_train, labels_train)
+    images_train2, labels_train2 = read_txt(TRAIN_DIR2, '/datasets/GenTextData/train.txt', images_train1, labels_train1)
+
+    # read val
+    images_val, labels_val = read_txt(VAL_DIR, 'val.txt')
+
+    createDataset(path_output + 'train', images_train2, labels_train)
     createDataset(path_output + 'val', images_val, labels_val)
+
 

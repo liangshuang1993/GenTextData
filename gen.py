@@ -76,7 +76,7 @@ class put_chinese_text(object):
         pen_translate = freetype.Vector()
 
         image = copy.deepcopy(img)
-        for cur_char in text:
+        for i, cur_char in enumerate(text):
             self._face.set_transform(matrix, pen_translate)
 
             self._face.load_char(cur_char)
@@ -85,7 +85,9 @@ class put_chinese_text(object):
             slot = self._face.glyph
             bitmap = slot.bitmap
 
-            # 
+            #
+            if i > 0:
+                pen.x += np.random.randint(500, 856)
 
             cur_pen.x = pen.x
             cur_pen.y = pen.y - slot.bitmap_top * 64

@@ -3,8 +3,7 @@ from gen import *
 import cv2
 import os
 import numpy as np
-import math
-from datetime import datetime
+import threading
 
 DATASET = 'datasets'
 TRAIN_DIR = DATASET + '/train'
@@ -15,21 +14,27 @@ if not os.path.exists(DATASET):
 if not os.path.exists(TRAIN_DIR):
     os.mkdir(TRAIN_DIR)
 
-class GenPic(object):
-    def __init__(self, label_file, prefix, height=32, font_size=24, margin=(5, 4), step=3):
+
+PREFIX = ['a', 'b', 'c']
+
+class GenPic(threading.Thread):
+    def __init__(self, thread_id, train_dir, labels, height=32,
+                 font_size=24, margin=(1, 2), step=3):
+        threading.Thread.__init__(self)
         self.backgounds = os.listdir('background')
         self.height = height
         self.font_size = font_size
-        self.english_fonts = ['Times New Roman.ttf', '宋体_GB18030+%26+新宋体_GB18030.ttc', 'Ubuntu-Bold.ttf', 'simhei.ttf']
-        self.chinese_fonts = ['原版宋体.ttf', '宋体_GB18030+%26+新宋体_GB18030.ttc']
+        self.english_fonts = ['Times New Roman.ttf', '宋体_GB18030+%26+新宋体_GB18030.ttc', 
+                              'Ubuntu-Bold.ttf', 'simhei.ttf']
+       # self.chinese_fonts = ['圆体.ttf', '微软雅黑.ttf', '楷书.ttf', '原版宋体.ttf']
+        self.chinese_fonts = ['圆体.ttf']
         self.margin = margin
         self.step = step
-        self.prefix = prefix
+        self.prefix = PREFIX[thread_id]
         self.count = 0
-        with open(label_file, 'r') as f:
-            self.labels = f.readlines()
-
-        self.f = open('train.txt', 'w')
+        self.image_dir = train_dir
+        self.labels = labels
+        self.f = open(os.path.join(DATASET, 'train' + str(thread_id) + '.txt'), 'w')
 
     def get_bg(self, length):
         bg = np.random.choice(self.backgounds)
@@ -37,7 +42,7 @@ class GenPic(object):
         b_height, b_width, b_channel = img.shape
 
         # crop sutible size
-        width = (self.font_size + 2)* length + self.margin[0] * 2
+        width = (self.font_size + 1)* length + self.margin[0] * 2
         if b_height < self.height:
             raise Exception('Background height less than font_height')
         if b_width < width:
@@ -52,7 +57,7 @@ class GenPic(object):
         # color_ = (0, 0, 0) # black
         return (np.random.randint(thes), np.random.randint(thes), np.random.randint(thes))
 
-    def generate_pics(self, image_dir):
+    def run(self):
 
         for label in self.labels:
             # print label
@@ -62,14 +67,15 @@ class GenPic(object):
             print label
 
             length = len(label.decode('utf-8'))
+
             step = np.random.randint(2, self.step + 1)
             # for gap1 in [5]:
-            for start1 in range(0, 2 * self.margin[1], step):
-                for angle in range(-15, 15, 3):
-                    
+            for start1 in range(2, 2 * self.margin[1], step):
+                for angle in range(-15, 15, 5):
+
                     if self.__has_chinese(label.decode('utf-8')):
                         # horizantal
-                        for start0 in range(0, 2 * (self.margin[0] + length) + step - 1, step):
+                        for start0 in range(2, 2 * (self.margin[0] + length) + step - 1, step):
                             if start0 > 2 * (self.margin[0] + length):
                                 start0 = 2 * (self.margin[0] + length)
                             pos = (start0, start1)
@@ -77,12 +83,12 @@ class GenPic(object):
                                 try:
                                     img = self.get_bg(length)
                                     color = self.get_color()
-                                    self.__draw(image_dir, img, pos, label, color, font,
+                                    self.__draw(self.image_dir, img, pos, label, color, font,
                                                 angle)
                                 except Exception as e:
                                     print e
                     else:
-                        for start0 in range(0, 2 * (self.margin[0] + 3 * length) + step - 1, step):
+                        for start0 in range(2, 2 * (self.margin[0] + 3 * length) + step - 1, step):
                             if start0 > 2 * (self.margin[0] + 3 * length):
                                 start0 = 2 * (self.margin[0] + 3 * length)
                             pos = (start0, start1)
@@ -90,7 +96,7 @@ class GenPic(object):
                                 try:
                                     img = self.get_bg(length)
                                     color = self.get_color()
-                                    self.__draw(image_dir, img, pos, label, color, font,
+                                    self.__draw(self.image_dir, img, pos, label, color, font,
                                                 angle)
                                 except Exception as e:
                                     print e
@@ -112,8 +118,8 @@ class GenPic(object):
                                 angle)
         # light = np.random.choice(range(8, 13))
         # image = image * light / 10.0
-        image = np.uint8(np.clip((np.random.randint(10, 20) / 10.0 * image + np.random.randint(20)), 0, 255))
-        image = cv2.resize(image, (int(image.shape[0] * np.random.randint(8, 12) / 10.0), 32))
+        # image = np.uint8(np.clip((np.random.randint(10, 20) / 10.0 * image + np.random.randint(20)), 0, 255))
+        image = cv2.resize(image, (int(image.shape[1] * np.random.randint(8, 12) / 10.0), 32))
 
         # label contains / or other char
 
@@ -134,9 +140,19 @@ class GenPic(object):
 
 
 if __name__ == '__main__':
+    with open('word2.txt', 'r') as f:
+        labels = f.readlines()
 
-    # only use this script to generate train images, val images use real images
-    gen = GenPic('word2.txt', 'f')
-    gen.generate_pics(TRAIN_DIR)
-    gen.f.close()
+    length = len(labels)
+    thread_num = 2
+
+    thread_list = []
+    for m in range(thread_num):
+        current_labels = labels[int(m * length / thread_num): int((m + 1) * length / thread_num)]
+        thread = GenPic(m, TRAIN_DIR, current_labels)
+        thread_list.append(thread)
+        thread.start()
+    for t in thread_list:
+        t.join()
+
     print 'done'
