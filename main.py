@@ -74,7 +74,6 @@ class GenPic(threading.Thread):
                 for angle in range(-15, 15, 5):
 
                     if self.__has_chinese(label.decode('utf-8')):
-
                         # horizantal
                         for start0 in range(2, 2 * (self.margin[0] + length) + step - 1, step):
                             if start0 > 2 * (self.margin[0] + length):
@@ -104,13 +103,19 @@ class GenPic(threading.Thread):
 
     def __draw(self, image_dir, img, pos, label, color_, font, angle):
         ft = put_chinese_text('fonts/' + font)
-        image = ft.draw_text(img,
-                             pos,
-                             label,
-                             np.random.randint(self.font_size - 5,
-                                               self.font_size),
-                             color_,
-                             angle)
+        image = img
+        gap_ratio = 1.2
+        i = 0
+        for ch in label.decode('utf-8'):
+            new_pos = [int(self.font_size * gap_ratio * i + pos[0]), int(self.font_size * i * math.sin(angle) + pos[1])]
+            i += 1
+            image = ft.draw_text(image,
+                                new_pos,
+                                ch,
+                                np.random.randint(self.font_size - 5,
+                                                self.font_size + 5),
+                                color_,
+                                angle)
         # light = np.random.choice(range(8, 13))
         # image = image * light / 10.0
         # image = np.uint8(np.clip((np.random.randint(10, 20) / 10.0 * image + np.random.randint(20)), 0, 255))
