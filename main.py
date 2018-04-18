@@ -37,7 +37,7 @@ class GenPic(object):
         b_height, b_width, b_channel = img.shape
 
         # crop sutible size
-        width = (self.font_size + 2)* length + self.margin[0] * 2
+        width = (self.font_size + 5)* length + self.margin[0] * 2
         if b_height < self.height:
             raise Exception('Background height less than font_height')
         if b_width < width:
@@ -109,7 +109,7 @@ class GenPic(object):
         # light = np.random.choice(range(8, 13))
         # image = image * light / 10.0
         image = np.uint8(np.clip((np.random.randint(10, 20) / 10.0 * image + np.random.randint(20)), 0, 255))
-        image = cv2.resize(image, (int(image.shape[0] * np.random.randint(8, 12) / 10.0), 32))
+        image = cv2.resize(image, (int(image.shape[1] * np.random.randint(8, 12) / 10.0), 32))
 
         # label contains / or other char
 
