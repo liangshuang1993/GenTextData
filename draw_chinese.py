@@ -6,6 +6,18 @@ import math
 import os
 import copy
 
+DATASET = 'datasets'
+TRAIN_DIR = DATASET + '/train'
+
+if not os.path.exists(DATASET):
+    os.mkdir(DATASET)
+
+if not os.path.exists(TRAIN_DIR):
+    os.mkdir(TRAIN_DIR)
+
+
+PREFIX = ['a', 'b', 'c']
+
 def draw_bbox(img, pt1, pt2, angle, color=(255, 0, 0)):
     bbox = get_bbox(pt1, pt2, angle)
     cv2.line(img, bbox[0], bbox[1], color, 1)
@@ -137,37 +149,63 @@ def has_chinese(word):
     return False
 
 if __name__ == '__main__':
-    with open('word2.txt', 'r') as f:
+    with open('new_label.txt', 'r') as f:
         labels = f.readlines()
     backgrounds = load_backgrounds('./background/')
     english_faces = load_faces('./fonts/', False) # chinese font supports english
     chinese_faces = load_faces('./fonts/', True)
     faces = []
 
+    f = open(os.path.join(DATASET, 'train' + '.txt'), 'w')
+    count = 0
+    prefix = 'a'
+
+    label_number = len(labels)
+    label_count = 0
+
     for label in labels:
+        print 'Progress status:', label_count / float(label_number)
+        label_count += 1
         label = label.strip()
-        for bg in backgrounds:
-            bg_height = bg.shape[0]
-            bg_width = bg.shape[1]
-            if has_chinese(label):
-                faces = chinese_faces
-            else:
-                faces = english_faces
-            for face in faces:
-                for positionIdx in range(2):
-                    x = np.random.randint(0, bg_width)
-                    y = np.random.randint(0, bg_height)
-                    position = [x, y]
-                    for angle in range(-6, 6, 1):
-                        for paddingIdx in range(10):
-                            padding = [np.random.randint(0, 5), np.random.randint(0, 8), np.random.randint(0, 5), np.random.randint(0, 8)]
-                            for colorIdx in range(5):
-                                color = [np.random.randint(100, 255), np.random.randint(100, 255), np.random.randint(100, 255)]
-                                for ratio in range(6, 14, 1):
-                                    ratio /= 10.0
-                                    for gap in range(0, 6, 2):
-                                        min_, max_, background = draw_string(bg, face, label, position, angle, padding, color, ratio, gap)
-                                        crop_img = background[min_[1]:max_[1], min_[0]:max_[0]]
-                                        cv2.imshow('background', background)
-                                        cv2.imshow('trim', crop_img)
-                                        cv2.waitKey(0)
+        bg = np.random.choice(backgrounds)
+        bg_height = bg.shape[0]
+        bg_width = bg.shape[1]
+        if has_chinese(label):
+            faces = chinese_faces
+        else:
+            faces = english_faces
+        face = np.random.choice(faces)
+        for positionIdx in range(2):
+            x = np.random.randint(0, bg_width - 100)
+            y = np.random.randint(0, bg_height - 32)
+            position = [x, y]
+            for angle in range(-15, 15, 3):
+                for paddingIdx in range(3):
+                    padding = [np.random.randint(0, 5),
+                               np.random.randint(0, 8),
+                               np.random.randint(0, 5),
+                               np.random.randint(0, 8)]
+                    for colorIdx in range(1):
+                        color = [np.random.randint(100, 255),
+                                 np.random.randint(100, 255),
+                                 np.random.randint(100, 255)]
+                        ratio = np.random.choice(range(6,14,1))
+                        ratio /= 10.0
+                        for gap in range(0, 6, 2):
+                            try:
+                                min_, max_, background = \
+                                    draw_string(bg, face, label, position, angle, padding, color, ratio, gap)
+                                crop_img = background[min_[1]:max_[1], min_[0]:max_[0]]
+                                # cv2.imshow('background', background)
+                                # cv2.imshow('trim', crop_img)
+                                # cv2.waitKey(0)
+                                image_name = os.path.join(TRAIN_DIR, prefix + str(count)) + '.jpg'
+                                h, w, c = crop_img.shape
+                                if h == 0:
+                                    continue
+                                resize_img = cv2.resize(crop_img, ((int(w / float(h) * 32), 32)))
+                                cv2.imwrite(image_name, resize_img)
+                                f.write(image_name + ' ' + label + '\n')
+                                count += 1
+                            except Exception as e:
+                                print e

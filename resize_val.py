@@ -10,6 +10,6 @@ for image in val_images:
     img = cv2.imread(os.path.join(SOURCE_DIR, image))
     h, w, c = img.shape
 
-    img = cv2.resize(img, (w / h * 32, 32))
+    img = cv2.resize(img, (int(w / float(h) * 32), 32))
     print img.shape
     cv2.imwrite(os.path.join(DEST_DIR, image), img)
