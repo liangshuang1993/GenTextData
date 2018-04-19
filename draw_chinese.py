@@ -175,7 +175,6 @@ if __name__ == '__main__':
             faces = chinese_faces
         else:
             faces = english_faces
-        face = np.random.choice(faces)
         for positionIdx in range(2):
             x = np.random.randint(0, bg_width)
             y = np.random.randint(0, bg_height)
@@ -193,20 +192,21 @@ if __name__ == '__main__':
                         ratio = np.random.choice(range(6,14,1))
                         ratio /= 10.0
                         for gap in range(0, 6, 2):
-                            # try:
-                            min_, max_, background = \
-                                draw_string(bg, face, label, position, angle, padding, color, ratio, gap)
-                            crop_img = background[min_[1]:max_[1], min_[0]:max_[0]]
-                            # cv2.imshow('background', background)
-                            # cv2.imshow('trim', crop_img)
-                            # cv2.waitKey(0)
-                            image_name = os.path.join(TRAIN_DIR, prefix + str(count)) + '.jpg'
-                            h, w, c = crop_img.shape
-                            if h == 0:
-                                continue
-                            resize_img = cv2.resize(crop_img, ((int(w / float(h) * 32), 32)))
-                            cv2.imwrite(image_name, resize_img)
-                            f.write(image_name + ' ' + label + '\n')
-                            count += 1
-                            # except Exception as e:
-                            #    print e
+                            try:
+                                face = np.random.choice(faces)
+                                min_, max_, background = \
+                                    draw_string(bg, face, label, position, angle, padding, color, ratio, gap)
+                                crop_img = background[min_[1]:max_[1], min_[0]:max_[0]]
+                                # cv2.imshow('background', background)
+                                # cv2.imshow('trim', crop_img)
+                                # cv2.waitKey(0)
+                                image_name = os.path.join(TRAIN_DIR, prefix + str(count)) + '.jpg'
+                                h, w, c = crop_img.shape
+                                if h == 0:
+                                    continue
+                                resize_img = cv2.resize(crop_img, ((int(w / float(h) * 32), 32)))
+                                cv2.imwrite(image_name, resize_img)
+                                f.write(image_name + ' ' + label + '\n')
+                                count += 1
+                            except Exception as e:
+                               print e
