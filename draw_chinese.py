@@ -54,7 +54,7 @@ def rotate_pt(origin, pt, angle):
     cos_angle = math.cos(angle_degree)
     return (int(origin[0] + cos_angle * delta[0] - sin_angle * delta[1]), int(origin[1] + sin_angle * delta[0] + cos_angle * delta[1]))
 
-def draw_string(bg, face, string, position, angle, padding, color, ratio, gap):
+def draw_string(bg, face, string, position, angle, padding, color, ratio, gap, noise_flag=False):
     '''
     bg: pre-loaded images
     face: pre-loaded Face
@@ -114,9 +114,14 @@ def draw_string(bg, face, string, position, angle, padding, color, ratio, gap):
         for row in range(rows):
             for col in range(cols):
                 if glyph_pixels[row*cols + col] != 0:
-                    background[y_pos + row][x_pos + col][0] = color[0]
-                    background[y_pos + row][x_pos + col][1] = color[1]
-                    background[y_pos + row][x_pos + col][2] = color[2]
+                    if np.random.randint(3) < 1:
+                        background[y_pos + row][x_pos + col][0] = np.random.randint(100, 200)
+                        background[y_pos + row][x_pos + col][1] = np.random.randint(100, 200)
+                        background[y_pos + row][x_pos + col][2] = np.random.randint(100, 200)
+                    else:
+                        background[y_pos + row][x_pos + col][0] = color[0]
+                        background[y_pos + row][x_pos + col][1] = color[1]
+                        background[y_pos + row][x_pos + col][2] = color[2]
         idx += 1
     return min_, max_, background
 
@@ -149,6 +154,7 @@ def has_chinese(word):
     return False
 
 if __name__ == '__main__':
+    noise_flag = True
     with open('word2.txt', 'r') as f:
         labels = f.readlines()
     backgrounds = load_backgrounds('./background/')
@@ -158,7 +164,7 @@ if __name__ == '__main__':
 
     f = open(os.path.join(DATASET, 'train' + '.txt'), 'w')
     count = 0
-    prefix = 'a'
+    prefix = 'z'
 
     label_number = len(labels)
     label_count = 0
@@ -168,18 +174,19 @@ if __name__ == '__main__':
         label_count += 1
         label = label.strip()
         label_length = len(label)
-        bg = np.random.choice(backgrounds)
-        bg_height = bg.shape[0]
-        bg_width = bg.shape[1]
+        # bg_height = bg.shape[0]
+        # bg_width = bg.shape[1]
         if has_chinese(label):
             faces = chinese_faces
         else:
             faces = english_faces
         for positionIdx in range(2):
-            x = np.random.randint(0, bg_width)
-            y = np.random.randint(0, bg_height)
+            # x = np.random.randint(0, bg_width - 100)
+            # y = np.random.randint(0, bg_height - 40)
+            x = np.random.randint(0, 70)
+            y = np.random.randint(0, 30)
             position = [x, y]
-            for angle in range(-15 / label_length, 15 / label_length, max(1, 3 / label_length)):
+            for angle in range(-15, 15, 3):
                 for paddingIdx in range(3):
                     padding = [np.random.randint(0, 5),
                                np.random.randint(0, 8),
@@ -194,8 +201,9 @@ if __name__ == '__main__':
                         for gap in range(0, 6, 2):
                             try:
                                 face = np.random.choice(faces)
+                                bg = np.random.choice(backgrounds)
                                 min_, max_, background = \
-                                    draw_string(bg, face, label, position, angle, padding, color, ratio, gap)
+                                    draw_string(bg, face, label, position, angle, padding, color, ratio, gap, noise_flag)
                                 crop_img = background[min_[1]:max_[1], min_[0]:max_[0]]
                                 # cv2.imshow('background', background)
                                 # cv2.imshow('trim', crop_img)
@@ -204,7 +212,18 @@ if __name__ == '__main__':
                                 h, w, c = crop_img.shape
                                 if h == 0:
                                     continue
-                                resize_img = cv2.resize(crop_img, ((int(w / float(h) * 32), 32)))
+                                new_width = int(w / float(h) * 32)
+                                if new_width > 1000:
+                                    print h, w
+                                    break
+                                resize_img = cv2.resize(crop_img, (new_width, 32))
+                                # if noise_flag:
+                                #     for row in range(new_width):
+                                #         for col in range(32):
+                                #             if np.random.randint(5) == 4:
+                                #                 resize_img[col][row][0] = np.random.randint(20, 30)
+                                #                 resize_img[col][row][1] = np.random.randint(20, 30)
+                                #                 resize_img[col][row][2] = np.random.randint(20, 30)
                                 cv2.imwrite(image_name, resize_img)
                                 f.write(image_name + ' ' + label + '\n')
                                 count += 1
