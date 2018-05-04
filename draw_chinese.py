@@ -6,7 +6,7 @@ import math
 import os
 import copy
 
-DATASET = 'datasets'
+DATASET = 'datasets_fix'
 TRAIN_DIR = DATASET + '/train'
 
 if not os.path.exists(DATASET):
@@ -155,7 +155,7 @@ def has_chinese(word):
 
 if __name__ == '__main__':
     noise_flag = True
-    with open('word2.txt', 'r') as f:
+    with open('new_labels_fix.txt', 'r') as f:
         labels = f.readlines()
     backgrounds = load_backgrounds('./background/')
     english_faces = load_faces('./fonts/', False) # chinese font supports english
@@ -180,7 +180,7 @@ if __name__ == '__main__':
             faces = chinese_faces
         else:
             faces = english_faces
-        for positionIdx in range(2):
+        for positionIdx in range(1):
             # x = np.random.randint(0, bg_width - 100)
             # y = np.random.randint(0, bg_height - 40)
             x = np.random.randint(0, 70)
@@ -198,13 +198,14 @@ if __name__ == '__main__':
                                  np.random.randint(0, 100)]
                         ratio = np.random.choice(range(6,14,1))
                         ratio /= 10.0
-                        for gap in range(0, 6, 2):
+                        for gap in range(0, 6, 3):
                             try:
                                 face = np.random.choice(faces)
                                 bg = np.random.choice(backgrounds)
                                 min_, max_, background = \
                                     draw_string(bg, face, label, position, angle, padding, color, ratio, gap, noise_flag)
                                 crop_img = background[min_[1]:max_[1], min_[0]:max_[0]]
+
                                 # cv2.imshow('background', background)
                                 # cv2.imshow('trim', crop_img)
                                 # cv2.waitKey(0)
@@ -217,14 +218,30 @@ if __name__ == '__main__':
                                     print h, w
                                     break
                                 resize_img = cv2.resize(crop_img, (new_width, 32))
-                                # if noise_flag:
-                                #     for row in range(new_width):
-                                #         for col in range(32):
-                                #             if np.random.randint(5) == 4:
-                                #                 resize_img[col][row][0] = np.random.randint(20, 30)
-                                #                 resize_img[col][row][1] = np.random.randint(20, 30)
-                                #                 resize_img[col][row][2] = np.random.randint(20, 30)
-                                cv2.imwrite(image_name, resize_img)
+                                if noise_flag:
+                                        for row in range(32):
+                                            for col in range(new_width):
+                                                if np.random.randint(5) < 1: # 0.2
+                                                    if np.random.randint(5) < 4:
+                                                        resize_img[row][col][0] = np.random.randint(0, 30)
+                                                        resize_img[row][col][1] = np.random.randint(0, 30)
+                                                        resize_img[row][col][2] = np.random.randint(0, 30)
+
+                                if np.random.randint(2):
+                                    # Gaussian blur
+                                    # kernel_size = np.random.choice((3, 5))
+                                    # blur_img = cv2.GaussianBlur(resize_img, (kernel_size, kernel_size), 0)
+                                    blur_img = cv2.bilateralFilter(resize_img, 9, 75, 75) 
+                                    # if noise_flag:
+                                    #     for row in range(new_width):
+                                    #         for col in range(32):
+                                    #             if np.random.randint(5) == 4:
+                                    #                 resize_img[col][row][0] = np.random.randint(20, 30)
+                                    #                 resize_img[col][row][1] = np.random.randint(20, 30)
+                                    #                 resize_img[col][row][2] = np.random.randint(20, 30)
+                                    cv2.imwrite(image_name, blur_img)
+                                else:
+                                    cv2.imwrite(image_name, resize_img)
                                 f.write(image_name + ' ' + label + '\n')
                                 count += 1
                             except Exception as e:

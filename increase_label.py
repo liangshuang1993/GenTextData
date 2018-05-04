@@ -56,9 +56,10 @@ def increase_label(original, target):
         dicts = list(dicts)
 
     with open(target, 'a+') as f:
-        for i in range(2000):
+        for i in range(10000):
             # choose random word
-            number = np.random.randint(2, 7)
+            # number = np.random.randint(2, 7)
+            number = 5
             words = np.random.choice(dicts, number)
             # print words.encode('utf-8')
             # print words
@@ -66,5 +67,5 @@ def increase_label(original, target):
             f.write(line.encode('utf-8') + '\n')
 
 if __name__ == '__main__':
-    get_dict('train.txt', 'val.txt')
-    increase_label('labels.txt', 'new_labels.txt')
+    # get_dict('datasets_c/train.txt', 'val.txt')
+    increase_label('empty.txt', 'new_labels_fix.txt')
